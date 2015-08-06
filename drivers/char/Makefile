@@ -67,4 +67,3 @@ obj-$(CONFIG_MXS_VIIM)		+= mxs_viim.o
 
 obj-$(CONFIG_JS_RTC)		+= js-rtc.o
 js-rtc-y = rtc.o
-obj-$(CONFIG_XILLYBUS)          += xillybus/

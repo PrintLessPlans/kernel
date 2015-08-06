@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2014 Freescale Semiconductor, Inc. All Rights Reserved.
+ *  Copyright (C) 2011-2013 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -85,13 +85,8 @@ extern int set_cpu_freq(int wp);
 extern void mx6_suspend(suspend_state_t state);
 extern void mx6_init_irq(void);
 extern unsigned int gpc_wake_irq[4];
+
 extern bool enable_wait_mode;
-extern unsigned long save_ttbr1(void);
-extern void restore_ttbr1(u32 ttbr1);
-extern unsigned long mx6_suspend_end asm("mx6_suspend_end");
-extern unsigned long mx6_suspend_start asm("mx6_suspend_start");
-
-
 static struct device *pm_dev;
 struct clk *gpc_dvfs_clk;
 static void __iomem *scu_base;
@@ -102,9 +97,10 @@ static void __iomem *gic_dist_base;
 static void __iomem *gic_cpu_base;
 static void __iomem *anatop_base;
 
+static void *suspend_iram_base;
 static void (*suspend_in_iram)(suspend_state_t state,
 	unsigned long iram_paddr, unsigned long suspend_iram_base, unsigned int cpu_type) = NULL;
-static unsigned long cpaddr;
+static unsigned long iram_paddr, cpaddr;
 
 static u32 ccm_ccr, ccm_clpcr, scu_ctrl;
 static u32 gpc_imr[4], gpc_cpu_pup, gpc_cpu_pdn, gpc_cpu, gpc_ctr, gpc_disp;
@@ -113,10 +109,6 @@ static u32 ccm_analog_pfd528;
 static u32 ccm_analog_pll3_480;
 static u32 ccm_anadig_ana_misc2;
 static bool usb_vbus_wakeup_enabled;
-
-void *suspend_iram_base;
-unsigned long suspend_iram_phys_addr;
-unsigned long total_suspend_size;
 
 /*
  * The USB VBUS wakeup should be disabled to avoid vbus wake system
@@ -354,8 +346,8 @@ static int mx6_suspend_enter(suspend_state_t state)
 	__raw_writel(__raw_readl(IOMUXC_GPR1) | (1 << 18), IOMUXC_GPR1);
 
 	if (state == PM_SUSPEND_MEM || state == PM_SUSPEND_STANDBY) {
-		u32 ttbr1;
 
+		local_flush_tlb_all();
 		flush_cache_all();
 
 		if (arm_pg) {
@@ -367,10 +359,8 @@ static int mx6_suspend_enter(suspend_state_t state)
 		if (pm_data && pm_data->suspend_enter)
 			pm_data->suspend_enter();
 
-		ttbr1 = save_ttbr1();
-		suspend_in_iram(state, (unsigned long)suspend_iram_phys_addr,
+		suspend_in_iram(state, (unsigned long)iram_paddr,
 			(unsigned long)suspend_iram_base, cpu_type);
-		restore_ttbr1(ttbr1);
 
 		if (pm_data && pm_data->suspend_exit)
 			pm_data->suspend_exit();
@@ -497,8 +487,6 @@ static struct platform_driver mx6_pm_driver = {
 static int __init pm_init(void)
 {
 	int ret = 0;
-	unsigned long suspend_code_size;
-
 	scu_base = IO_ADDRESS(SCU_BASE_ADDR);
 	gpc_base = IO_ADDRESS(GPC_BASE_ADDR);
 	src_base = IO_ADDRESS(SRC_BASE_ADDR);
@@ -518,25 +506,20 @@ static int __init pm_init(void)
 	}
 
 	suspend_set_ops(&mx6_suspend_ops);
-	/* Use preallocated IRAM memory. */
-	suspend_iram_phys_addr = MX6_SUSPEND_IRAM_CODE;
-
-	/* Dont ioremap the address, we have fixed the IRAM address at IRAM_BASE_ADDR_VIRT */
-	suspend_iram_base = (void *)IRAM_BASE_ADDR_VIRT + (suspend_iram_phys_addr - IRAM_BASE_ADDR);
-
+	/* Move suspend routine into iRAM */
+	cpaddr = (unsigned long)iram_alloc(SZ_8K, &iram_paddr);
+	/* Need to remap the area here since we want the memory region
+		 to be executable. */
+	suspend_iram_base = __arm_ioremap(iram_paddr, SZ_8K,
+					  MT_MEMORY_NONCACHED);
 	pr_info("cpaddr = %x suspend_iram_base=%x\n",
 		(unsigned int)cpaddr, (unsigned int)suspend_iram_base);
 
-
-	suspend_code_size = (&mx6_suspend_end -&mx6_suspend_start) *4;
 	/*
 	 * Need to run the suspend code from IRAM as the DDR needs
 	 * to be put into low power mode manually.
 	 */
-	memcpy((void *)suspend_iram_base, mx6_suspend, suspend_code_size);
-
-	/* Now add the space used for storing various registers and IO in suspend. */
-	total_suspend_size = suspend_code_size + MX6_SUSPEND_DATA_SIZE;
+	memcpy((void *)cpaddr, mx6_suspend, SZ_8K);
 
 	suspend_in_iram = (void *)suspend_iram_base;
 

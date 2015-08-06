@@ -305,11 +305,8 @@ gckKERNEL_AllocateLinearMemory(
 
             if (status == gcvSTATUS_OK)
             {
-                if(*Pool == gcvPOOL_SYSTEM)
-                    Type |= gcvSURF_VG;
                 /* Allocate memory. */
-                status = gckVIDMEM_AllocateLinear(Kernel,
-                                                  videoMemory,
+                status = gckVIDMEM_AllocateLinear(videoMemory,
                                                   Bytes,
                                                   Alignment,
                                                   Type,
@@ -600,7 +597,7 @@ gceSTATUS gckVGKERNEL_Dispatch(
 #endif /* __QNXNTO__ */
 
         /* Free video memory. */
-        gcmkERR_BREAK(gckVIDMEM_Free(Kernel,
+        gcmkERR_BREAK(gckVIDMEM_Free(
             node
             ));
 
@@ -658,7 +655,6 @@ gceSTATUS gckVGKERNEL_Dispatch(
             gcmNAME_TO_PTR(kernelInterface->u.UnmapUserMemory.info),
             kernelInterface->u.UnmapUserMemory.address
             ));
-        gcmRELEASE_NAME(kernelInterface->u.UnmapUserMemory.info);
         break;
     case gcvHAL_LOCK_VIDEO_MEMORY:
         node = gcmUINT64_TO_PTR(Interface->u.LockVideoMemory.node);
