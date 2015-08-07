@@ -102,6 +102,7 @@
 #define SABRESD_USBH1_PWR_EN	IMX_GPIO_NR(1, 29)
 #define SABRESD_DISP0_PWR_EN	IMX_GPIO_NR(1, 30)
 
+#define SABRESD_PHY_ENABLE	IMX_GPIO_NR(1, 23)
 #define SABRESD_SD1_CD		IMX_GPIO_NR(1, 1)
 #define SABRESD_SD3_CD		IMX_GPIO_NR(2, 0)
 #define SABRESD_SD3_WP		IMX_GPIO_NR(2, 1)
@@ -266,6 +267,7 @@ static inline void mx6q_sabresd_init_uart(void)
 	imx6q_add_imx_uart(0, NULL);
 }
 
+#ifndef CONFIG_ENET_RMII
 static int mx6q_sabresd_fec_phy_init(struct phy_device *phydev)
 {
 	unsigned short val;
@@ -304,12 +306,31 @@ static int mx6q_sabresd_fec_phy_init(struct phy_device *phydev)
 
 	return 0;
 }
+#else
+static int mx6q_sabresd_fec_phy_init(struct phy_device *phydev)
+{
+       int val;
+       gpio_request(SABRESD_PHY_ENABLE, "phy-rst");
+       gpio_direction_output(SABRESD_PHY_ENABLE, 0);
+       mdelay(1);
+       gpio_direction_output(SABRESD_PHY_ENABLE, 1);
+
+       /* check phy power */
+       val = phy_read(phydev, 0x0);
+       if (val & BMCR_PDOWN) {
+               phy_write(phydev, 0x0, (val & ~BMCR_PDOWN));
+       }
+
+       return 0;
+}
+#endif
 
 static struct fec_platform_data fec_data __initdata = {
 	.init = mx6q_sabresd_fec_phy_init,
-	.phy = PHY_INTERFACE_MODE_RGMII,
+//	.phy = PHY_INTERFACE_MODE_RGMII,
+	.phy = PHY_INTERFACE_MODE_RMII,
 #ifdef CONFIG_MX6_ENET_IRQ_TO_GPIO
-	.gpio_irq = MX6_ENET_IRQ,
+//	.gpio_irq = MX6_ENET_IRQ,
 #endif
 };
 
@@ -1856,6 +1877,12 @@ static void __init mx6_sabresd_board_init(void)
 	imx6q_add_mxc_hdmi(&hdmi_data);
 
 	imx6q_add_anatop_thermal_imx(1, &mx6q_sabresd_anatop_thermal_data);
+
+#ifdef CONFIG_ENET_RMII
+       /* Set RGMII_TX_CTL output for RMII reference clock */
+       mxc_iomux_set_gpr_register(1, 21, 1, 1);
+#endif
+
 	imx6_init_fec(fec_data);
 #ifdef CONFIG_MX6_ENET_IRQ_TO_GPIO
 	/* Make sure the IOMUX_OBSRV_MUX1 is set to ENET_IRQ. */
