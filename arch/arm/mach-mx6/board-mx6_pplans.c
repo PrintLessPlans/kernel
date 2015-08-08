@@ -154,7 +154,8 @@
 #define SABRESD_HEADPHONE_DET	IMX_GPIO_NR(7, 8)
 #define SABRESD_PCIE_RST_B_REVB	IMX_GPIO_NR(7, 12)
 #define SABRESD_PMIC_INT_B	IMX_GPIO_NR(7, 13)
-#define SABRESD_PFUZE_INT	IMX_GPIO_NR(7, 13)
+//#define SABRESD_PFUZE_INT	IMX_GPIO_NR(7, 13)
+#define SABRESD_PFUZE_INT	IMX_GPIO_NR(1, 3)
 
 #define SABRESD_EPDC_SDDO_0	IMX_GPIO_NR(2, 22)
 #define SABRESD_EPDC_SDDO_1	IMX_GPIO_NR(3, 10)
@@ -207,6 +208,12 @@
 
 #define GPIO_I2C3_SDA		IMX_GPIO_NR(1,5)
 #define GPIO_I2C3_SCL		IMX_GPIO_NR(4,5)
+
+#define PPLANS_DEBUG_LED2	IMX_GPIO_NR(7,12)  //led2
+#define PPLANS_DEBUG_LED3	IMX_GPIO_NR(1,8)  //led3
+#define PPLANS_DEBUG_LED4	IMX_GPIO_NR(1,7) //led4
+#define PPLANS_DEBUG_LED5	IMX_GPIO_NR(7,13) //led5
+
 
 
 #ifdef CONFIG_MX6_ENET_IRQ_TO_GPIO
@@ -1611,15 +1618,11 @@ static void gps_power_on(bool on)
  * GPIO_LED(SABRESD_CHARGE_DONE, "chg_detect", 0, 1, "ac-online"),
  */
 static struct gpio_led imx6q_gpio_leds[] = {
-	GPIO_LED(SABRESD_CHARGE_NOW, "chg_now_led", 0, 1,
-		"charger-charging"),
-/* For the latest B4 board, this GPIO_1 is connected to POR_B,
-which will reset the whole board if this pin's level is changed,
-so, for the latest board, we have to avoid using this pin as
-GPIO.
-	GPIO_LED(SABRESD_CHARGE_DONE, "chg_done_led", 0, 1,
-			"charger-full"),
-*/
+
+	GPIO_LED(PPLANS_DEBUG_LED2,"led2",0,1,"blinking2"),
+	GPIO_LED(PPLANS_DEBUG_LED3,"led3",0,1,"blinking3"),
+	GPIO_LED(PPLANS_DEBUG_LED4,"led4",0,1,"blinking4"),
+	GPIO_LED(PPLANS_DEBUG_LED5,"led5",0,1,"blinking5"),
 };
 
 static struct gpio_led_platform_data imx6q_gpio_leds_data = {
