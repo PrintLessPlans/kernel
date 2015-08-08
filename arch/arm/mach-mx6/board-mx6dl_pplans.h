@@ -49,7 +49,6 @@ static iomux_v3_cfg_t mx6dl_sabresd_pads[] = {
         MX6DL_PAD_ENET_RXD0__ENET_RDATA_0,
         MX6DL_PAD_ENET_RXD1__ENET_RDATA_1,
 
-        MX6DL_PAD_GPIO_7__GPIO_1_7,
         MX6DL_PAD_ENET_REF_CLK__GPIO_1_23,
         MX6DL_PAD_ENET_TX_EN__ENET_TX_EN,               
 
@@ -57,6 +56,13 @@ static iomux_v3_cfg_t mx6dl_sabresd_pads[] = {
         MX6DL_PAD_ENET_TXD0__ENET_TDATA_0,
         MX6DL_PAD_ENET_TXD1__ENET_TDATA_1,
         MX6DL_PAD_GPIO_16__ENET_ANATOP_ETHERNET_REF_OUT,
+
+	/* Debug LED */
+	MX6DL_PAD_GPIO_17__GPIO_7_12,
+	MX6DL_PAD_GPIO_8__GPIO_1_8,
+	MX6DL_PAD_GPIO_7__GPIO_1_7,
+	MX6DL_PAD_GPIO_18__GPIO_7_13,
+
 
 	/* CPU power control */
 	MX6DL_PAD_EIM_A18__GPIO_2_20,
@@ -289,8 +295,6 @@ static iomux_v3_cfg_t mx6dl_sabresd_pads[] = {
 	/* AUX_5V Enable */
 	MX6DL_PAD_NANDF_RB0__GPIO_6_10,
 
-	/* PCIE_RST_B */
-	MX6DL_PAD_GPIO_17__GPIO_7_12,
 	/* PCIE_PWR_EN */
 	MX6DL_PAD_EIM_D19__GPIO_3_19,
 	/* PCIE_WAKE_B */
@@ -298,8 +302,6 @@ static iomux_v3_cfg_t mx6dl_sabresd_pads[] = {
 	/* PCIE_DIS_B */
 	MX6DL_PAD_KEY_COL4__GPIO_4_14,
 
-	/* PMIC_INT_B */
-	MX6DL_PAD_GPIO_18__GPIO_7_13,
 
 	/* Charge */
 	MX6DL_PAD_EIM_A25__GPIO_5_2,  /* FLT_1_B */
