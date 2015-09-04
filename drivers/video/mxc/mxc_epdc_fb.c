@@ -988,20 +988,20 @@ static void epdc_init_settings(struct mxc_epdc_fb_data *fb_data)
 
 	/*
 	 * EPDC_TCE_SDCFG
-	 * SDCLK_HOLD = 1
+	 * SDCLK_HOLD = 0
 	 * SDSHR = 1
 	 * NUM_CE = 1
-	 * SDDO_REFORMAT = FLIP_PIXELS
+	 * SDDO_REFORMAT = standard
 	 * SDDO_INVERT = DISABLED
 	 * PIXELS_PER_CE = display horizontal resolution
 	 */
 	num_ce = epdc_mode->num_ce;
 	if (num_ce == 0)
 		num_ce = 1;
-	reg_val = EPDC_TCE_SDCFG_SDCLK_HOLD | EPDC_TCE_SDCFG_SDSHR
+	reg_val = EPDC_TCE_SDCFG_SDSHR
 	    | ((num_ce << EPDC_TCE_SDCFG_NUM_CE_OFFSET) &
 	       EPDC_TCE_SDCFG_NUM_CE_MASK)
-	    | EPDC_TCE_SDCFG_SDDO_REFORMAT_FLIP_PIXELS
+	    | EPDC_TCE_SDCFG_SDDO_REFORMAT_STANDARD
 	    | ((epdc_mode->vmode->xres/num_ce << EPDC_TCE_SDCFG_PIXELS_PER_CE_OFFSET) &
 	       EPDC_TCE_SDCFG_PIXELS_PER_CE_MASK);
 	__raw_writel(reg_val, EPDC_TCE_SDCFG);
@@ -1009,21 +1009,21 @@ static void epdc_init_settings(struct mxc_epdc_fb_data *fb_data)
 	/*
 	 * EPDC_TCE_GDCFG
 	 * GDRL = 1
-	 * GDOE_MODE = 0;
+	 * GDOE_MODE = 1;
 	 * GDSP_MODE = 0;
 	 */
-	reg_val = EPDC_TCE_SDCFG_GDRL;
+	reg_val = EPDC_TCE_SDCFG_GDRL | EPDC_TCE_SDCFG_GDOE_MODE_DELAYED_GDCLK;
 	__raw_writel(reg_val, EPDC_TCE_GDCFG);
 
 	/*
 	 * EPDC_TCE_POLARITY
-	 * SDCE_POL = ACTIVE LOW
-	 * SDLE_POL = ACTIVE HIGH
+	 * SDCE_POL = ACTIVE HIGH
+	 * SDLE_POL = ACTIVE LOW
 	 * SDOE_POL = ACTIVE HIGH
 	 * GDOE_POL = ACTIVE HIGH
 	 * GDSP_POL = ACTIVE LOW
 	 */
-	reg_val = EPDC_TCE_POLARITY_SDLE_POL_ACTIVE_HIGH
+	reg_val = EPDC_TCE_POLARITY_SDCE_POL_ACTIVE_HIGH
 	    | EPDC_TCE_POLARITY_SDOE_POL_ACTIVE_HIGH
 	    | EPDC_TCE_POLARITY_GDOE_POL_ACTIVE_HIGH;
 	__raw_writel(reg_val, EPDC_TCE_POLARITY);
