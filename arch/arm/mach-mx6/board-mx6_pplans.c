@@ -82,7 +82,9 @@
 #include "crm_regs.h"
 #include "cpu_op-mx6.h"
 #include "board-mx6q_sabresd.h"
+//#include "board-mx6dl_sabresd.h"
 #include "board-mx6dl_pplans.h"
+//#include "board-mx6dl_pplans_ori.h"
 
 #define SABRESD_USR_DEF_GRN_LED	IMX_GPIO_NR(1, 1)
 #define SABRESD_USR_DEF_RED_LED	IMX_GPIO_NR(1, 2)
@@ -103,6 +105,7 @@
 #define SABRESD_SD1_CD		IMX_GPIO_NR(1, 1)
 #define SABRESD_SD3_CD		IMX_GPIO_NR(2, 0)
 #define SABRESD_SD3_WP		IMX_GPIO_NR(2, 1)
+//#define SABRESD_SD2_CD		IMX_GPIO_NR(2, 2)
 #define SABRESD_SD2_CD		IMX_GPIO_NR(1, 4)	//Manoj
 #define SABRESD_SD2_WP		IMX_GPIO_NR(2, 3)
 #define SABRESD_CHARGE_DOK_B	IMX_GPIO_NR(2, 24)
@@ -118,6 +121,7 @@
 #define SABRESD_eCOMPASS_INT	IMX_GPIO_NR(3, 16)
 #define SABRESD_GPS_PPS		IMX_GPIO_NR(3, 18)
 #define SABRESD_PCIE_PWR_EN	IMX_GPIO_NR(3, 19)
+//#define SABRESD_USB_OTG_PWR	IMX_GPIO_NR(3, 22)
 #define SABRESD_USB_OTG_PWR	IMX_GPIO_NR(4, 10)
 #define SABRESD_USB_H1_PWR	IMX_GPIO_NR(1, 29)
 #define SABRESD_CHARGE_CHG_1_B	IMX_GPIO_NR(3, 23)
@@ -258,6 +262,7 @@ static const struct anatop_thermal_platform_data
 
 static inline void mx6q_sabresd_init_uart(void)
 {
+//	imx6q_add_imx_uart(2, NULL);
 	imx6q_add_imx_uart(0, NULL);
 }
 
