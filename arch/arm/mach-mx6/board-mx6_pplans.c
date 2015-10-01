@@ -104,11 +104,11 @@
 
 #define SABRESD_PHY_ENABLE	IMX_GPIO_NR(1, 23)
 #define SABRESD_SD1_CD		IMX_GPIO_NR(1, 1)
-#define SABRESD_SD3_CD		IMX_GPIO_NR(2, 0)
-#define SABRESD_SD3_WP		IMX_GPIO_NR(2, 1)
+//#define SABRESD_SD3_CD		IMX_GPIO_NR(2, 0)
+//#define SABRESD_SD3_WP		IMX_GPIO_NR(2, 1)
 //#define SABRESD_SD2_CD		IMX_GPIO_NR(2, 2)
 #define SABRESD_SD2_CD		IMX_GPIO_NR(1, 4)	//Manoj
-#define SABRESD_SD2_WP		IMX_GPIO_NR(2, 3)
+//#define SABRESD_SD2_WP		IMX_GPIO_NR(2, 3)
 #define SABRESD_CHARGE_DOK_B	IMX_GPIO_NR(2, 24)
 #define SABRESD_GPS_RESET	IMX_GPIO_NR(2, 28)
 #define SABRESD_SENSOR_EN	IMX_GPIO_NR(2, 31)
@@ -213,6 +213,15 @@
 #define PPLANS_DEBUG_LED3	IMX_GPIO_NR(1,8)  //led3
 #define PPLANS_DEBUG_LED4	IMX_GPIO_NR(1,7) //led4
 #define PPLANS_DEBUG_LED5	IMX_GPIO_NR(7,13) //led5
+
+#define PPLANS_FPGA_DISP_CTRL1_A IMX_GPIO_NR(2,0) //Disp control1
+#define PPLANS_FPGA_DISP_CTRL2_B IMX_GPIO_NR(2,1) //Disp control2 
+#define PPLANS_FPGA_DISP_CTRL3_C IMX_GPIO_NR(2,2) //Disp control3
+#define PPLANS_FPGA_DISP_CTRL4_D IMX_GPIO_NR(2,3) //Disp control4
+#define PPLANS_FPGA_DISP_CTRL5_E IMX_GPIO_NR(2,4) //Disp control5
+#define PPLANS_FPGA_DISP_CTRL6_F IMX_GPIO_NR(2,5) //Disp control6
+#define PPLANS_FPGA_DISP_EN      IMX_GPIO_NR(2,7) //Disp enable
+#define PPLANS_DISP_LATCH        IMX_GPIO_NR(2,6) //Disp latch. if needed use otherwise no need
 
 
 
@@ -890,6 +899,44 @@ static struct i2c_board_info mxc_i2c2_board_info[] __initdata = {
 		.irq = gpio_to_irq(SABRESD_ELAN_INT),
 	},*/
 };
+
+
+
+//pplans 6 gpio display controller 
+static void pplans_epdc_fpga_gpio_display_controller()
+{
+
+
+        gpio_request(PPLANS_FPGA_DISP_CTRL1_A,"disp1");
+        gpio_direction_output(PPLANS_FPGA_DISP_CTRL1_A,1);
+        gpio_export(PPLANS_FPGA_DISP_CTRL1_A,0);
+
+        gpio_request(PPLANS_FPGA_DISP_CTRL2_B,"disp2");
+        gpio_direction_output(PPLANS_FPGA_DISP_CTRL2_B,0);
+        gpio_export(PPLANS_FPGA_DISP_CTRL2_B,0);
+
+        gpio_request(PPLANS_FPGA_DISP_CTRL3_C,"disp3");
+        gpio_direction_output(PPLANS_FPGA_DISP_CTRL3_C,0);
+        gpio_export(PPLANS_FPGA_DISP_CTRL3_C,0);
+
+        gpio_request(PPLANS_FPGA_DISP_CTRL4_D,"disp4");
+        gpio_direction_output(PPLANS_FPGA_DISP_CTRL4_D,0);
+        gpio_export(PPLANS_FPGA_DISP_CTRL4_D,0);
+
+        gpio_request(PPLANS_FPGA_DISP_CTRL5_E,"disp5");
+        gpio_direction_output(PPLANS_FPGA_DISP_CTRL5_E,0);
+        gpio_export(PPLANS_FPGA_DISP_CTRL5_E,0);
+
+        gpio_request(PPLANS_FPGA_DISP_CTRL6_F,"disp6");
+        gpio_direction_output(PPLANS_FPGA_DISP_CTRL6_F,0);
+        gpio_export(PPLANS_FPGA_DISP_CTRL6_F,0);
+
+        gpio_request(PPLANS_FPGA_DISP_EN,"disp_en");
+        gpio_direction_output(PPLANS_FPGA_DISP_EN,1);
+        gpio_export(PPLANS_FPGA_DISP_EN,0);
+
+
+}
 
 static int epdc_get_pins(void)
 {
@@ -1853,6 +1900,7 @@ static void __init mx6_sabresd_board_init(void)
 		mxc_i2c0_board_info[0].platform_data = &wm8962_config_data;
 	}
 	imx6q_add_device_gpio_leds();
+	pplans_epdc_fpga_gpio_display_controller();
 
 	imx6q_add_imx_i2c(0, &mx6q_sabresd_i2c_data);
 	imx6q_add_imx_i2c(1, &mx6q_sabresd_i2c_data);
