@@ -89,6 +89,7 @@
 #define MERGE_BLOCK	2
 
 static unsigned long default_bpp = 16;
+int display = 0;
 
 struct update_marker_data {
 	struct list_head full_list;
@@ -173,9 +174,9 @@ struct mxc_epdc_fb_data {
 	u8 *temp_range_bounds;
 	struct mxcfb_waveform_modes wv_modes;
 	bool wv_modes_update;
-	u32 *waveform_buffer_virt;
-	u32 waveform_buffer_phys;
-	u32 waveform_buffer_size;
+	u32 *waveform_buffer_virt[6];
+	u32 waveform_buffer_phys[6];
+	u32 waveform_buffer_size[6];
 	u32 *working_buffer_virt;
 	u32 working_buffer_phys;
 	u32 working_buffer_size;
@@ -207,6 +208,7 @@ struct mxc_epdc_fb_data {
 	bool powering_down;
 	bool updates_active;
 	int pwrdown_delay;
+	int display;
 	unsigned long tce_prevent;
 	bool restrict_width; /* work around rev >=2.0 width and
 				stride restriction  */
@@ -1041,7 +1043,8 @@ static void epdc_init_settings(struct mxc_epdc_fb_data *fb_data)
 	    | ((0 << EPDC_GPIO_BDR_OFFSET) & EPDC_GPIO_BDR_MASK);
 	__raw_writel(reg_val, EPDC_GPIO);
 
-	__raw_writel(fb_data->waveform_buffer_phys, EPDC_WVADDR);
+		dev_info(fb_data->dev, " mem set in init\n \n ");
+	__raw_writel(fb_data->waveform_buffer_phys[fb_data->display - 1], EPDC_WVADDR);
 	__raw_writel(fb_data->working_buffer_phys, EPDC_WB_ADDR);
 	__raw_writel(fb_data->working_buffer_phys, EPDC_WB_ADDR_TCE);
 
@@ -1161,6 +1164,7 @@ static void epdc_powerdown(struct mxc_epdc_fb_data *fb_data)
 static void epdc_init_sequence(struct mxc_epdc_fb_data *fb_data)
 {
 	/* Initialize EPDC, passing pointer to EPDC registers */
+	fb_data->display = 1;
 	epdc_init_settings(fb_data);
 	fb_data->in_init = true;
 	epdc_powerup(fb_data);
@@ -3098,6 +3102,24 @@ int mxc_epdc_get_pwrdown_delay(struct fb_info *info)
 }
 EXPORT_SYMBOL(mxc_epdc_get_pwrdown_delay);
 
+int mxc_epdc_set_display(u32 display, struct fb_info *info)
+{
+
+	struct mxc_epdc_fb_data *fb_data = info ?
+		(struct mxc_epdc_fb_data *)info:g_fb_data;
+	pr_info("MXCFB_SET_DISPLAY  >>>>>>>>%d \n \n", fb_data->display);
+	if(!fb_data->display == 0)
+	{
+	fb_data->display = display;
+	epdc_init_settings(fb_data);
+	pr_info("MXCFB_SET_DISPLAY  >>>>>>>>%d \n \n", display);
+	pr_info("EPDC_WVADDR 0x%x\n,  dispaly %d add ", __raw_readl(EPDC_WVADDR), display );
+	}
+	return 0;
+
+}
+EXPORT_SYMBOL(mxc_epdc_set_display);
+
 static int mxc_epdc_fb_ioctl(struct fb_info *info, unsigned int cmd,
 			     unsigned long arg)
 {
@@ -3206,6 +3228,23 @@ static int mxc_epdc_fb_ioctl(struct fb_info *info, unsigned int cmd,
 			outer_flush_all();
 			break;
 		}
+	case MXCFB_SET_DISPLAY:
+		{
+			int display = 0;
+			get_user(display, (__u32 __user *) arg);
+			pr_info("MXCFB_SET_DISPLAY %d \n \n", display);
+			ret = mxc_epdc_set_display(display, info);
+                        break;
+                }
+	case MXCFB_GET_DISPLAY:
+		{
+			int display = 0;
+			put_user(display, (int __user *)argp);	
+			pr_info("MXCFB_GET_DISPLAY\n \n");
+			ret = 0;
+                        break;
+                }
+
 
 	default:
 		break;
@@ -4126,6 +4165,7 @@ static void mxc_epdc_fb_fw_handler(const struct firmware *fw,
 	struct clk *epdc_parent;
 	unsigned long rounded_parent_rate, epdc_pix_rate,
 			rounded_pix_clk, target_pix_clk;
+	char fw_buff[32];
 
 	if (fw == NULL) {
 		/* If default FW file load failed, we give up */
@@ -4163,23 +4203,34 @@ static void mxc_epdc_fb_fw_handler(const struct firmware *fw,
 
 	/* Get offset and size for waveform data */
 	wv_data_offs = sizeof(wv_file->wdh) + fb_data->trt_entries + 1;
-	fb_data->waveform_buffer_size = fw->size - wv_data_offs;
+	fb_data->waveform_buffer_size[0] = fw->size - wv_data_offs;
 
 	/* Allocate memory for waveform data */
-	fb_data->waveform_buffer_virt = dma_alloc_coherent(fb_data->dev,
-						fb_data->waveform_buffer_size,
-						&fb_data->waveform_buffer_phys,
-						GFP_DMA);
-	if (fb_data->waveform_buffer_virt == NULL) {
-		dev_err(fb_data->dev, "Can't allocate mem for waveform!\n");
-		return;
+	for(i = 0; i < 6; i++)
+	{	
+		if(i > 0)
+		{
+			dev_info(fb_data->dev, "read fw %d \n \n ",i);
+			snprintf(fw_buff, sizeof(fw_buff),"imx/epdc_PPLANS%d.fw",i);	
+			ret = request_firmware(&fw, fw_buff, fb_data->dev);
+			if (ret)
+				dev_err(fb_data->dev,"Failed request_firmware %s  err %d\n",fw_buff, ret);
+			dev_info(fb_data->dev, "fw copy \n \n ");
+			fb_data->waveform_buffer_size[i] = fw->size - wv_data_offs;
+		}
+		fb_data->waveform_buffer_virt[i] = dma_alloc_coherent(fb_data->dev,
+							fb_data->waveform_buffer_size[i],
+							&fb_data->waveform_buffer_phys[i],
+							GFP_DMA);
+		if (fb_data->waveform_buffer_virt == NULL) {
+			dev_err(fb_data->dev, "Can't allocate mem for waveform!\n");
+			return;
+		}
+		memcpy(fb_data->waveform_buffer_virt[i], (u8 *)(fw->data) + wv_data_offs,
+			fb_data->waveform_buffer_size[i]);
+
+		release_firmware(fw);
 	}
-
-	memcpy(fb_data->waveform_buffer_virt, (u8 *)(fw->data) + wv_data_offs,
-		fb_data->waveform_buffer_size);
-
-	release_firmware(fw);
-
 	/* Enable clocks to access EPDC regs */
 	clk_enable(fb_data->epdc_clk_axi);
 
@@ -4379,7 +4430,7 @@ int __devinit mxc_epdc_fb_probe(struct platform_device *pdev)
 
 	if (!fb_data->default_bpp)
 		fb_data->default_bpp = 16;
-
+	fb_data->display = 0;
 	/* Set default (first defined mode) before searching for a match */
 	fb_data->cur_mode = &fb_data->pdata->epdc_mode[0];
 
@@ -4871,6 +4922,7 @@ int __devinit mxc_epdc_fb_probe(struct platform_device *pdev)
 	fb_data->wait_for_powerdown = false;
 	fb_data->updates_active = false;
 	fb_data->pwrdown_delay = 0;
+	fb_data->display = 0;
 
 	/* Register FB */
 	ret = register_framebuffer(info);
