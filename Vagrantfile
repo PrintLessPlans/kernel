@@ -16,7 +16,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # please see the online documentation at vagrantup.com.
 
   # Every Vagrant virtual environment requires a box to build off of.
-  config.vm.box = "phusion/ubuntu-14.04-amd64"
+  config.vm.box = "vladistan/trusty64-min"
 
   config.vm.synced_folder "", "/opt/uboot"
   

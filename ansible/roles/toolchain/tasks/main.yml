@@ -29,3 +29,9 @@
 
 - name: Ensure have 32bit libs (3/3)
   apt:  name=lib32bz2-1.0 state=present
+
+- name: Ensure to have U-Boot tools (1/2)
+  apt:  name=u-boot-tools state=present
+
+- name: Ensure to have U-Boot tools (2/2)
+  apt:  name=lzop state=present
