@@ -1,5 +1,5 @@
-GIT_ID=`gt rev-parse HEAD | cut -c1-6`
-export BUILD_NUMBER=5
+GIT_ID=`git rev-parse HEAD | cut -c1-6`
+export BUILD_NUMBER=7
 export IMG=uImage-1.0.${BUILD_NUMBER}-${GIT_ID}
 echo Uploading $IMG
 cp arch/arm/boot/uImage ${IMG}
