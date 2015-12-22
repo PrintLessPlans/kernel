@@ -1,0 +1,8 @@
+GIT_ID=`gt rev-parse HEAD | cut -c1-6`
+export BUILD_NUMBER=5
+export IMG=uImage-1.0.${BUILD_NUMBER}-${GIT_ID}
+echo Uploading $IMG
+cp arch/arm/boot/uImage ${IMG}
+aws s3 cp ${IMG}   s3://pplansbuildtools/kernel/defaultStage/defaultJob/1.0.${BUILD_NUMBER}/${IMG}
+echo Updating Metadata
+python updateRepo.py kernel ${BUILD_NUMBER}
