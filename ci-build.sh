@@ -6,6 +6,10 @@ set -e
 
 export ARCH=arm
 
+export
+arm-none-eabi-gcc
+gcc
+
 rm -rf mod
 
 make distclean
