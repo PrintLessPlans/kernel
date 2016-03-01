@@ -5,6 +5,7 @@ set -e
 . ./SetEnv
 
 export ARCH=arm
+export PATH=$PATH:/var/go/SW/gcc-arm-none-eabi-4_7-2013q3/bin/
 
 rm -rf mod
 
